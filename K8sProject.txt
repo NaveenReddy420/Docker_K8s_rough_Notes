@@ -1,0 +1,1572 @@
+SDLC --> Software Development Life Cycle
+
+Requirements
+Design
+Development
+Deployment
+Testing
+Maintenance
+
+Types of errors:
+----------------
+1. Devlopement Errors i.e., related to functionality (Code Developer is responsible)
+   through testing we will find these errors before client does
+2. Build and Configuration errors:
+   not able to connect database
+   firewall errors
+   server memory is less
+
+Procedure of deploying an application in any environment:  
+DEV, QA, UAT, PRE-PROD, PROD
+----------------------------
+Buy a server
+Install OS
+Network and Firewalls
+Install few packages and Dependencies
+Application server-->JRE, .NET, Python
+Install Application
+
+Waterfall Model: The waterfall model is a linear, sequential approach to software development where each phase, such as planning, design, construction, testing, and maintenance, is completed before moving on to the next.
+
+Agile Technology: Agile technology is a flexible and collaborative approach to software development that emphasizes iterative and incremental work, allowing teams to adapt to changing requirements and deliver working software in short iterations.
+
+DevOps Process: DevOps is a software development methodology that combines development (creating software) and operations (managing and deploying software), aiming to improve collaboration, automation, and efficiency throughout the entire software development lifecycle.
+
+Physical server vs Virtualization vs Containerisation
+
+A System will have 65536 ports (0-65535)
+
+Dockerfile:
+
+FROM instruction initializes a new build stage and sets the Base Image for subsequent instructions.
+RUN instruction will execute any commands in a new layer on top of the current image and commit the results.
+CMD: There can only be one CMD instruction in a Dockerfile. If you list more than one CMD then only the last CMD will take effect.
+
+RUN instruction is used to execute commands during the image build process and commit the results, while the 
+CMD instruction sets the default command to run when a container is started from the image.
+
+LABEL instruction adds metadata to an image. A LABEL is a key-value pair. 
+EXPOSE instruction informs Docker that the container listens on the specified network ports at runtime. You can specify whether the port listens on TCP or UDP, and the default is TCP if the protocol is not specified.
+Ex: EXPOSE 80/udp
+    EXPOSE 8080/tcp
+ENV instruction sets the environment variable <key> to the value <value>.
+ENV MY_NAME="John Doe"
+COPY instruction copies new files or directories from <src> and adds them to the filesystem of the container at the path <dest>.
+ADD instruction copies new files, directories or remote file URLs from <src> and adds them to the filesystem of the image at the path <dest>.
+
+COPY is used for straightforward file and directory copying, while 
+ADD has additional features like handling URLs and automatic extraction of archives.
+
+ENTRYPOINT is also used to run the container just like CMD. But there are few differences,
+1. We can't override ENTRYPOINT, but we can override CMD.
+2. We can't override ENTRYPOINT, if you try to do so it will go and append to the ENTRYPOINT command.
+3. If you use CMD and ENTRYPOINT and dont give any command from terminal, CMD acts as argument provider to ENTRYPOINT.
+4. CMD will supply default arguments to ENTRYPOINT.
+5. You can always override cmd arguments
+
+Ex: Dockerfile
+FROM almalinux
+CMD ["google.com"]
+ENTRYPOINT ["ping", "-c5"]
+
+docker build -t entry:v1 .
+docker run entry:v1 yahoo.com
+
+USER instruction sets the user name (or UID) and optionally the user group (or GID) to use as the default user and group for the remainder of the current stage.
+WORKDIR instruction sets the working directory for any RUN, CMD, ENTRYPOINT, COPY and ADD instructions that follow it in the Dockerfile.
+WORKDIR /path/to/workdir
+
+ARG is used to supply variables at the time of image creation.
+ARG instruction defines a variable that users can pass at build-time to the builder with the docker build command using the --build-arg <varname>=<value> flag.
+ARG is the only instruction we can define before FROM in the Dockerfile. ARG declared before cant be accessed after FROM.
+
+ONBUILD instruction adds to the image a trigger instruction to be executed at a later time, when the image is used as the base for another build. The trigger will be executed in the context of the downstream build, as if it had been inserted immediately after the FROM instruction in the downstream Dockerfile.
+
+STOPSIGNAL is used to how to exit the container.
+By default docker request for exit and wait for sometime. If it is not exiting it can force kill.
+
+
+Containers are epimaral, means if we delete the container, the data inside the container also deleted.
+If we create the docker volume and mount it to the container, then we can save the data.
+
+Docker volumes:
+/var/lib/docker/volumes
+docker volume create nginx
+docker volume ls 
+docker volume inspect nginx
+docker run -d -v nginx:/usr/share/nginx/html -p 80:80 nginx         -->attaching volume to a container
+echo "Hello world" > hi.html
+docker rm -f CONTAINER_ID
+cd /var/lib/docker/volumes/nginx/_data/
+ls -l          -->still we can see the data(hi.html) after deleting the container.             
+
+NOTE:
+Inside Host machine you will have a directory for volume. (/var/lib/docker/volumes/)
+This directory can be mounted with any path inside the container. 
+/var/lib/docker/volumes/nginx/_data/:/usr/share/nginx/html
+HOST_PATH                           :CONTAINER_PATH
+
+Ex: Dockerfile
+
+FROM ubuntu
+RUN mkdir /myvol
+RUN echo "hello world" > /myvol/greeting
+VOLUME /myvol
+
+Docker Networking:
+------------------
+Docker provides networking capabilities that allow containers to communicate with each other and with the outside world.
+Docker provides several network drivers, including bridge, overlay, macvlan, host, and none.
+By default, Docker creates a bridge network called "bridge" that allows containers to communicate with each other on the same host.
+
+Bridge: The default network driver. It creates a virtual network bridge on the Docker host, and each container gets an IP address from this bridge network. Containers connected to the same bridge network can communicate with each other using container names as hostnames.
+
+Overlay: Enables container communication across multiple Docker hosts. It uses VXLAN encapsulation to create an overlay network, allowing containers on different hosts to communicate as if they were on the same network.
+
+Macvlan: Provides each container with a MAC address, making it appear as a physical device on the network. Containers can have their IP addresses directly on the underlying network, making them reachable from other devices on the network.
+
+Host: Allows containers to use the host network stack directly, rather than creating a separate network namespace. Containers using the host network share the host's network interfaces and IP addresses, which can be useful for high-performance scenarios.
+
+None: Disables networking for a container. Containers using the "none" network driver cannot communicate with the outside world or other containers, but they can still access local resources within the container.
+
+Docker Network Commands:
+docker network create: Creates a new Docker network.
+docker network ls: Lists available Docker networks.
+docker network inspect: Retrieves detailed information about a Docker network.
+docker network connect: Connects a container to a Docker network.
+docker network disconnect: Disconnects a container from a Docker network.
+
+DNS Resolution: Docker provides a built-in DNS server that allows containers to resolve each other's names. Containers on the same network can communicate using the container names as hostnames.
+
+Default bridge network can't resolve on names.
+Docker recommends to create our own bridge network.
+Advanteages:
+Containers are isolated from another project.
+We can communicate using names between containers.
+
+Docker Compose:
+
+Docker Compose is a tool that allows you to define and manage multi-container Docker applications. It uses a YAML file to define the services, networks, and volumes required for your application. With Docker Compose, you can easily spin up and manage multiple Docker containers as a single application stack.
+
+Commnands to install Docker-Compose: (https://stackoverflow.com/questions/36685980/why-is-docker-installed-but-not-docker-compose)
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-$(uname -s)-$(uname -m)"  -o /usr/local/bin/docker-compose
+sudo mv /usr/local/bin/docker-compose /usr/bin/docker-compose
+sudo chmod +x /usr/bin/docker-compose
+
+docker-compose.yaml    (Need to create images manually by using docker build command before running this file)
+
+version: "3.9"
+services:
+  mongodb:
+    image: mongodb:v1
+    container_name: mongodb
+  catalogue:
+    image: catalogue:v1
+    container_name: catalogue
+    depends_on:
+      - mongodb
+  web:
+    image: web:v1
+    container_name: web
+    ports:
+      - "80:80"
+    depends_on:
+      - catalogue
+      - user
+      - cart
+      - mysql
+      - shipping
+  redis:
+    image: redis
+  user:
+    image: user:v1
+    container_name: user
+    depends_on:
+      - mongodb
+      - redis
+  cart:
+    image: cart:v1
+    container_name: cart
+    depends_on:
+      - redis
+      - catalogue
+  mysql:
+    image: mysql:v1
+    container_name: mysql
+  shipping:
+    image: shipping:v1
+    container_name: shipping
+    depends_on:
+      - mysql
+  rabbitmq:
+    image: rabbitmq
+    container_name: rabbitmq
+  payment:
+    image: payment:v1
+    container_name: payment
+    depends_on:
+      - rabbitmq
+  ratings:
+    image: ratings:v1
+    container_name: ratings
+    depends_on:
+      - mysql
+networks:
+  roboshop:
+    driver: bridge
+
+
+docker-compose up   : This command will read the docker-compose.yml file and create the defined services, networks, and volumes as specified. You can also use docker-compose up -d to run the containers in the background.
+
+docker-compose down  : To delete the resorces which are created by docker-compose.yaml file
+
+docker-install.sh     (Below shell script will install docker, git, docker-compose)
+
+#!/bin/bash
+
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+
+LOG=docker-install.log
+USER_ID=$(id -u)
+if [ $USER_ID -ne 0 ]; then
+	echo  -e "$R You are not the root user, you dont have permissions to run this $N"
+	exit 1
+fi
+
+VALIDATE(){
+	if [ $1 -ne 0 ]; then
+		echo -e "$2 ... $R FAILED $N"
+		exit 1
+	else
+		echo -e "$2 ... $G SUCCESS $N"
+	fi
+
+}
+
+yum update  -y &>>$LOG
+VALIDATE $? "Updating packages"
+
+yum install docker -y &>>$LOG
+VALIDATE $? "Installing Docker"
+
+service docker start &>>$LOG
+VALIDATE $? "Starting Docker"
+
+systemctl enable docker &>>$LOG
+VALIDATE $? "Enabling Docker"
+
+usermod -a -G docker ec2-user &>>$LOG
+VALIDATE $? "Added ec2-user to docker group"
+
+yum install git -y &>>$LOG
+VALIDATE $? "Installing GIT"
+
+curl -L sudo curl -L "https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-$(uname -s)-$(uname -m)"  -o /usr/local/bin/docker-compose &>>$LOG
+VALIDATE $? "Downloaded docker-compose"
+
+chmod +x /usr/local/bin/docker-compose
+VALIDATE $? "Moved docker-compose to local bin"
+
+echo  -e "$R You need logout and login to the server $N"
+
+To run above script use below command:
+curl https://raw.githubusercontent.com/NaveenReddy420/docker-install-commands/main/docker-install.sh | sudo bash
+
+Use below shell command to create all images at a time.
+for i in web mongodb catalogue user mysql shipping; do cd $i ; docker build -t $i:v1 . ; cd .. ; done
+
+Pushing all images to dockerhub:
+for i in web mongodb catalogue user cart mysql shipping payment ratings; do cd $i ; docker build -t naveenreddy369/$i:v1 . ; docker push naveenreddy369/$i:v1 ; cd .. ; done
+
+Best practices you implemented while creating docker images?
+1. Use light-weight base images like Alphine, Busybox, etc.
+2. Mutli-stage builds, remove unnecessary installations.
+3. Non root users.
+4. Use volumes for stateful applications.
+5. Use Docker Compose
+6. Use env variables instead of hard coding.
+7. Use dedicated custom network.
+8. Don't keep secrets in images.
+9. Scan the images and fix the vulnerabilities.
+10. Limit resources CPU, RAM.
+11. Configure health checks.
+
+Docker Architecture:   (https://docs.docker.com/get-started/overview/)
+Docker uses a client-server architecture. The Docker client talks to the Docker daemon, which does the heavy lifting of building, running, and distributing your Docker containers. The Docker client and daemon can run on the same system, or you can connect a Docker client to a remote Docker daemon. The Docker client and daemon communicate using a REST API, over UNIX sockets or a network interface. Another Docker client is Docker Compose, that lets you work with applications consisting of a set of containers.
+
+Docker architecture consists of
+
+Docker client which is shell
+Docker daemon
+Docker Registry
+Docker objects
+  Images
+  Containers
+Docker networking
+Docker storage
+
+Named volumes vs Anonymous volumes:
+
+
+====================================================================================================================
+
+
+K8s  Architecure:
+Master (or) Control Node:
+API Server
+Controller
+Scheduler
+etcd
+
+Worker Node:
+kubelet
+kube proxy
+Application Runtime (Docker)
+
+kubectl create -f pod.yml
+
+Whenever we hit the command from CLI, it will connect to the API server.
+API server with help of controller, it will create a pod.
+Scheduler will decide on which worker node this perticular pod should be run.
+etcd is a key-value database store. It stores the configuration of the Kubernetes cluster. It also stores the actual state of the system and the desired state of the system.
+
+Whenever the request is coming from API server, it will go to the kubelet.
+If you want to access your application outside of the cluster (Internet) then that the request will go through the kube proxy.
+
+Why you need Container Orchestration tool?
+Container orchestration tools like Kubernetes are used to manage and coordinate containerized applications across a cluster of machines. Here are some reasons why Kubernetes or similar container orchestration tools are important:
+
+1. Scalability: 
+Kubernetes enables you to easily scale your applications up or down based on demand.
+
+2. High availability: 
+It can automatically restart containers that fail, distribute containers across multiple nodes to prevent single points of failure, and handle node failures by rescheduling containers on other available nodes.
+
+3. Resource optimization: 
+It allows you to define resource requirements and limits for containers, ensuring efficient allocation of resources. It can also automatically schedule containers on suitable nodes based on available resources.
+
+4. Service discovery and load balancing: 
+Kubernetes provides built-in service discovery and load balancing mechanisms. It assigns a stable IP address and DNS name to each service, allowing other services to easily discover and communicate with them. It can also distribute incoming traffic across multiple instances of a service to ensure optimal load balancing.
+
+5. Rolling updates and rollbacks: 
+Kubernetes supports rolling updates, allowing you to update your applications without downtime. It gradually replaces old containers with new ones, ensuring that your application remains available during the update process. If any issues arise, Kubernetes supports easy rollbacks to a previous version.
+
+6. Self-healing: 
+Kubernetes continuously monitors the health of your applications and automatically restarts or replaces containers that fail.
+
+NOTE:
+In K8s, storage can be provisioned either inside or outside of the cluster. The choice depends on the specific requirements of your application and the available storage solutions.
+In K8s storage will be created outside of cluster. So we no need to worry eventhough cluster is crashed.
+
+Docker is used to create the containers.
+K8s is used to manage the containers.
+
+EKS Install
+NOTE: This is for the lab purpose, not for PROD purpose.
+
+How to provision EKS Cluster?
+Below softwares are mandatory to provision EKS Cluster.
+Eksctl: 
+Eksctl is a command-line tool provided by AWS to simplify the creation and management of Amazon EKS clusters.
+AWS CLI V2: 
+AWS CLI V2 is the second version of the AWS CLI, which allows users to interact with various AWS services through a unified CLI.
+Kubectl: 
+Kubectl is a command-line tool used to interact with Kubernetes clusters, enabling users to deploy, manage, and troubleshoot applications running on Kubernetes.
+
+We are going to create one EC2 Server (t2.medium) and use it as work-station to create EKS cluster.
+
+How it will work?
+eksctl will call AWS command line
+First it does authentication
+Steps:
+1. Create IAM Admin user with CLI access, It generates Access Key and Secret Key. Don't keep this in any version control like Github, Gitlab, etc.
+
+2. Install AWS CLI, by default AWS instance gets V1, We need to upgrade to V2.
+   (https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+
+Logout and Login again.
+
+3. Install latest eksctl command.
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+eksctl version
+
+4. Install kubectl command maxium one version less than EKS version.
+(https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
+Note:
+You must use a kubectl version that is within one minor version difference of your Amazon EKS cluster control plane. For example, a 1.26 kubectl client works with Kubernetes 1.25, 1.26, and 1.27 clusters.
+
+curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.10/2023-01-30/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/kubectl
+kubectl version --short --client
+
+5. Now we need to authenticate with IAM user which we created earlier.
+
+aws configure
+
+it will ask following details
+[ec2-user@ip-172-31-12-183 ~]$ aws configure
+AWS Access Key ID [None]: XXXXXXXXXXXXXX
+AWS Secret Access Key [None]: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Default region name [None]: ap-south-1
+Default output format [None]:
+
+for Default output no need to give anything.
+Access Key and Secret Key is already created while creating the IAM User.
+
+vim eks-config.yaml
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: spot-cluster
+  region: ap-south-1
+
+managedNodeGroups:
+
+# `instanceTypes` defaults to [`m5.large`]
+- name: spot-1
+  spot: true
+  ssh:
+    publicKeyName: kubernetes
+
+eksctl create cluster --config-file=eks-config.yaml
+
+It wills 15 to 20 mins to create a cluster.
+In background it will create a Cloud Formation stack. It is IaC service.
+
+After creation of cluster check last 2 lines of logs of "eksctl create cluster --config-file=eks-config.yaml" command
+
+2023-06-18 10:11:41 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2023-06-18 10:11:41 [✔]  EKS cluster "spot-cluster" in "ap-south-1" region is ready
+
+It is created a config file. This config file will be used for authentication.
+
+kubectl get nodes
+
+Note:
+We created eks-admin1 user in the IAM and gave EKS admin access. By default only to this use has access to the cluster.
+If you want to give access to other team members, you need to create users and provide permissions.(RBAC-Role Based Access Control)
+
+The first service we are going to create inside K8s is namespace.
+Namespace is a way to logically divide and isolate resources within a cluster.
+
+kubectl get namespaces
+cat namespace.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: roboshop
+
+kubectl create -f namespace.yaml
+kubectl get namespaces
+kubectl delete -f namespace.yaml
+
+cat pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+
+kubectl apply -f pod.yaml
+kubectl get pods
+kubectl get pods -o wide
+kubectl get pods -o yaml
+kubectl get pods -n roboshop
+kubectl get pods -A
+
+kubectl -f pod.yaml
+kubectl delete pod nginx
+
+There are 2 types of resources.
+1. Namspace level resources
+2. Cluster level resources
+
+kubectl api-resources
+kubectl api-resources | grep -i pod
+
+cat 02-multi-container.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multiple
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  - name: sidecar
+    image: almalinux
+    command: ["sleep", "200"]
+
+kubectl apply -f 02-multi-container.yaml
+kubectl get pods
+kubectl exec -it multiple -c sidecar -- bash      --> It will login to a sidebar container
+
+NOTE:
+Inside pod if there are multiple containers, all containers will share same IP address.
+
+kubectl delete -f 02-multi-container.yaml
+
+Image pull policy:
+It determines when and how a container image should be pulled from a container registry. It can be set at the pod level or the container level. The image pull policy can be one of the following options:
+
+Always: 
+This policy ensures that the image is always pulled from the registry, even if a local copy of the image already exists on the node. This is the default policy if not specified explicitly.
+
+IfNotPresent: 
+This policy pulls the image only if it does not exist locally on the node. If a local copy is found, it uses that instead of pulling from the registry.
+
+Never: 
+This policy instructs Kubernetes to never pull the image from the registry. It assumes that the image already exists on the node. If the image is not present locally, the pod will fail to start or run.
+
+03-image-pull.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: roboshop
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 80
+
+Below command will perform a syntax check and validation without actually creating the Pod.
+kubectl apply -f 03-image-pull.yaml --dry-run=client
+kubectl apply -f 03-image-pull.yaml
+
+kubectl delete -f 03-image-pull.yaml
+pod "nginx" deleted
+
+Stress: It will exhaust all the resorces.
+
+Dockerfile
+
+FROM almalinux:8
+RUN yum update -y
+RUN yum install stress-ng -y
+CMD ["stress-ng","--help"]
+
+docker build -t naveenreddy369/stress .
+docker login
+docker push naveenreddy369/stress
+
+04-resources.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress
+spec:
+  containers:
+    - name: stress
+      image: naveenreddy369/stress
+      imagePullPolicy: Always
+      command: ["sleep", "200"]
+
+kubectl apply -f 04-resources.yaml
+kubectl get pods -o wide
+kubectl exec -it stress -- bash
+stress-ng --help
+stress-ng --cpu 1
+
+Go check CPU utilization in the respective NODE server by using top command.
+
+Resource Management for Pods and Containers:
+
+In Kubernetes (K8s), you can set limits and requests for compute resources such as CPU and memory for individual containers or pods. These settings help in resource management and ensure that applications run within their required boundaries. 
+
+requests:
+Requests are the amount of compute resources that a container or pod specifies as the minimum required to run.
+
+Limits:
+Limits define the maximum amount of compute resources that a container or pod is allowed to consume.
+
+04-resources.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress
+spec:
+  containers:
+    - name: stress
+      image: naveenreddy369/stress
+      imagePullPolicy: Always
+      command: ["sleep", "200"]
+      resources:
+        requests:
+          memory: "20Mi"
+          cpu: "150m"    #1CPU= 1000m
+        limits:
+          memory: "30Mi"
+          cpu: "200"
+
+kubectl apply -f 04-resources.yaml
+kubectl get pods -o wide
+kubectl exec -it stress -- bash
+stress-ng --help
+stress-ng --cpu 1
+
+Go check CPU utilization in the respective NODE server by using top command.
+
+kubectl describe pod stress
+
+LimitRanges:
+LimitRanges are used to set resource limits for containers running in pods.
+A LimitRange defines minimum and maximum limits for CPU, memory, and storage resources that can be allocated to a pod.
+It ensures that containers don't exceed the specified resource boundaries, preventing resource hogging and promoting fairness and stability in the cluster.
+If a container tries to exceed the defined limits, Kubernetes takes action, such as terminating the container or throttling its resource usage.
+
+cat 05-limit-ranges.yaml
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-resource-constraint
+spec:
+  limits:
+  - default:
+      cpu: 500m
+    max:
+      cpu: "1"
+    min:
+      cpu: 100m
+    type: Container
+
+  - max:
+      cpu: "1"
+    min:
+      cpu: 100m
+    type: Pod
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress
+spec:
+  containers:
+    - name: stress
+      image: naveenreddy369/stress
+      imagePullPolicy: Always
+      command: ["sleep", "200"]
+
+
+kubectl apply -f 05-limit-ranges.yaml
+kubectl describe pod stress
+Containers:
+  stress:
+    Container ID:  containerd://2aea2b9c71f53c64b99e0c4461c6051b885d1af5a32d8f46707c6dcca8912578
+    Image:         naveenreddy369/stress
+    Image ID:      docker.io/naveenreddy369/stress@sha256:753ccbd252b824280ab792558fa7b5b8d6087dfea1a2b2b174028250b039bb38
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sleep
+      200
+    State:          Running
+      Started:      Mon, 19 Jun 2023 11:50:51 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:  500m
+    Requests:
+      cpu:        500m
+
+As we can see above, eventhough we didn't mention the resources and limits, default resources and limits are taken.
+
+Health checks in K8s:
+In Kubernetes, health checks are used to monitor the health and readiness of containers running in a Pod. There are two types of health checks commonly used in Kubernetes:
+
+Liveness Probes:
+A liveness probe is used to determine whether a pod is running properly. If the liveness probe fails, Kubernetes will restart the pod.
+
+There are three types of liveness probes:
+
+HTTP GET: Performs an HTTP GET request to a specified endpoint and considers the pod healthy if it receives a successful response (HTTP status code 2xx or 3xx).
+TCP Socket: Attempts to open a TCP connection to a specified port on the pod and considers the pod healthy if the connection is successful.
+Exec: Executes a specified command inside the pod and considers the pod healthy if the command exits with a status code of 0.
+
+Readiness Probes:
+A readiness probe determines whether a pod is ready to serve traffic. If a pod fails the readiness probe, it is temporarily removed from the pool of service endpoints, and no traffic is routed to it. Once the readiness probe passes, the pod is added back to the pool of endpoints, and traffic can be directed to it.
+
+The three types of readiness probes are the same as liveness probes:
+
+HTTP GET
+TCP Socket
+Exec
+
+cat 06-probe.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probe
+spec:
+  containers:
+    - image: nginx
+      name: nginx
+      livenessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 3
+        periodSeconds: 5
+
+kubectl apply -f 06-probe.yaml
+kubectl get pods
+kubectl exec -it probe -- bash
+cd /usr/share/nginx/html/
+ls -l
+rm -rf index.html
+watch kubectl get pods
+
+Every 2.0s: kubectl get pods                                                                                  Mon Jun 19 12:16:11 2023
+
+NAME     READY   STATUS             RESTARTS       AGE
+probe    1/1     Running            1 (11s ago)    4m57s
+
+you can see above after deleting index.html page, container is restarted. you can see restart count as 1.
+
+eksctl delete cluster --config-file=eks-config-spot.yaml
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Types of erros while running the Pod.yaml files
+
+Imagepullbackoff-  indicates that Kubernetes was unable to pull the container image specified in the pod's configuration
+Crashloopbackoff-  indicates that the container is repeatedly crashing and failing to start.
+
+Labels:
+
+Labels in Kubernetes are key-value pairs attached to objects (such as pods, services, or deployments) that allow for flexible and efficient grouping, selection, and organization of resources.
+
+cat 03-labels.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: label-pod
+  labels:
+    course: docker
+    duration: 25hrs
+    trainer: siva
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+
+kubectl apply -f 03-labels.yaml
+If you want see the labels use below command
+kubectl describe pod label-pod
+
+Annotations in Kubernetes are key-value pairs attached to objects (such as pods, services, or deployments) that provide additional metadata or information about the object, but they are not used for grouping or selection purposes like labels.
+
+Alias:
+alias ka='kubectl apply -f'
+alias kd='kubectl delete -f'
+alias kds='kubectl describe -f'
+
+Configmap:
+A ConfigMap is an API object used to store non-confidential data in key-value pairs. Pods can consume ConfigMaps as environment variables, command-line arguments, or as configuration files in a volume.
+
+cat 01-configMap.yaml 
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: course-config
+data:
+  course: docker
+  duration: 30hr
+
+kubectl apply -f 01-configMap.yaml
+kubectl get configmaps
+
+  cat 07-pod-config.yaml 
+# ---
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: config-pod
+# spec:
+#   containers:
+#   - name: nginx
+#     image: nginx
+#     env:
+#     - name: course
+#       valueFrom:
+#         configMapKeyRef:
+#           name: course-config
+#           key: course
+#     - name: duration
+#       valueFrom:
+#         configMapKeyRef:
+#           name: course-config
+#           key: duration
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-pod
+spec:
+  containers:
+  - name: ngin
+    image: nginx
+    envFrom:
+      - configMapRef:
+            name: course-config
+
+kubectl apply -f 07-pod-config.yaml
+kubectl get pods
+kubectl exec -it config-pod -- /bin/bash
+env
+
+Secrets:
+A Secret is an object that contains a small amount of sensitive data such as a password, a token, or a key. 
+
+Opaque is the default Secret type if omitted from a Secret configuration file. When you create a Secret using kubectl, you will use the generic subcommand to indicate an Opaque Secret type. For example, the following command creates an empty Secret of type Opaque.
+
+kubectl create secret generic empty-secret
+kubectl get secret empty-secret
+
+The output looks like:
+
+NAME           TYPE     DATA   AGE
+empty-secret   Opaque   0      2m6s
+
+[ec2-user@ip-172-31-10-222 pod]$ echo -n sivakumar | base64
+c2l2YWt1bWFy
+[ec2-user@ip-172-31-10-222 pod]$ echo -n sivakumar123 | base64
+c2l2YWt1bWFyMTIz
+
+The output of the echo command is then piped (|) to the base64 command, which encodes the input into Base64 format.
+
+Service:
+Service is a method for exposing a network application that is running as one or more Pods in your cluster.
+
+A service acts as a stable endpoint for other components within the cluster or external entities, allowing them to interact with the pods without knowing their specific IP addresses. It ensures that requests are load-balanced across the available pods
+
+We will attach our pods to the service. From the web we will access the pods through service.
+
+WEB------->Service<---------Pods (Pod1, Pod2,......)
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/service/01-service.yaml
+
+Service type:
+
+ClusterIP
+Exposes the Service on a cluster-internal IP. It is the default one.
+
+NodePort
+Exposes the Service on each Node's IP at a static port (the NodePort).
+Just like in docker we exposed nginx container at host level(host port) Here we are exposing at node level (Node port). K8s willn randomly open these ports. These ports are called as ephemeral ports. (ephemeral ports range linux: 32768-60999)
+NOTE: If we use NodePort, it will open the port in each and every node inside the cluster.
+
+USER----->NODE1:<NODE-PORT> --->Cluster IP --> Container
+          NODE2:<NODE-PORT> --->Cluster IP --> Container
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/service/02-service.yaml
+
+LoadBalancer
+Exposes the Service externally using an external load balancer. 
+LoadBalancer only works with Cloud providers(AWS, GCP, Azure)
+
+
+ExternalName
+Maps the Service to the contents of the externalName field (for example, to the hostname api.foo.bar.example).
+
+Explain ablout servive in K8s?
+K8s service works as a Load Balencer between the pods. We can use service for pod to pod communication becuase pods are ephemeral, IP address may change any time. But if you use service, you can call other pod with name of the service. There are 3 types of services.
+ClusterIP is for internal purpose
+NodePort, by using IP address of the any node and node port we can access from internet
+LoadBalancer, works with cloud providers.
+
+(LB(node port(cluster ip)))
+cluster ip is subset of node port and node port is a subset of LB.
+
+K8-roboshop:
+----------------------------------------------------------------------
+web:
+https://github.com/NaveenReddy420/k8-roboshop/tree/main/web
+
+docker build -t naveenreddy369/web:k8 .
+docker images
+docker login
+docker push naveenreddy369/web:k8
+kubectl apply -f manifest.yaml
+kubectl get pods
+kubectl get svc
+
+Acess the application in browser using DNS.
+
+mongodb:
+https://github.com/NaveenReddy420/k8-roboshop/tree/main/mongodb
+
+docker build -t naveenreddy369/mongodb:k8 .
+docker images
+docker push naveenreddy369/web:k8
+kubectl apply -f manifest.yaml
+kubectl get pods
+kubectl get svc
+
+catalogue:
+https://github.com/NaveenReddy420/k8-roboshop/tree/main/catalogue
+
+docker build -t naveenreddy369/catalogue:k8 .
+docker images
+docker push naveenreddy369/catalogue:k8
+kubectl apply -f manifest.yaml
+kubectl get pods
+kubectl get svc
+
+mysql:
+https://github.com/NaveenReddy420/k8-roboshop/tree/main/mysql
+docker build -t naveenreddy369/mysql:k8 .
+docker images
+docker push naveenreddy369/mysql:k8
+kubectl apply -f manifest.yaml
+kubectl get pods
+kubectl get svc
+
+redis:
+https://github.com/NaveenReddy420/k8-roboshop/tree/main/redis
+kubectl apply -f manifest.yaml
+kubectl get pods
+kubectl get svc
+
+user:
+https://github.com/NaveenReddy420/k8-roboshop/tree/main/user
+docker build -t naveenreddy369/user:k8 .
+docker images
+docker push naveenreddy369/user:k8
+kubectl apply -f manifest.yaml
+kubectl get pods
+kubectl get svc
+
+Follow same process for remaining modules.
+
+docker build -t naveenreddy369/mongodb:k8 --no-cache .
+
+---------------------------------------------------------------------------------------------------------
+ReplicaSet:
+===========
+A ReplicaSet's purpose is to maintain a stable set of replica Pods running at any given time.
+
+ReplicaSets are commonly used in real-time scenarios instead of managing Pods directly for several reasons:
+1. High Availability and Fault Tolerance
+2. Scalability
+3. Rolling Updates and Rollbacks
+4. Load Balancing
+5. Declarative Configuration
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/tree/main/sets
+
+kubectl apply -f 01-replicaset.yaml
+kubectl get pods
+kubectl get rs
+
+Pod Name= [replicaset-name]-[random-name]
+Ex: nginx-pznjz
+
+Incase pods are crashed or deleted, Replicaset immediately will spinup the new pod to match the desired number of pods.
+
+Problem with ReplicaSet:
+Whenever a new image version of application (i.e., image) is released, you need to manually remove the ReplicaSet and create again.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ChatGPT:
+The above statement is false. You do not need to manually remove and recreate a ReplicaSet when a new image version of the application is released.
+
+In Kubernetes, you can perform rolling updates to update the image version of the Pods managed by a ReplicaSet. Rolling updates allow you to gradually replace the existing Pods with new Pods using the updated image, without causing downtime or disrupting the application.
+
+To perform a rolling update, you can update the image version in the ReplicaSet's Pod template specification. Kubernetes will automatically manage the update process for you. It will create new Pods with the updated image, gradually scale them up, and then terminate the old Pods running the previous image version.
+
+The rolling update process can be controlled and monitored using deployment strategies and parameters such as maxUnavailable and maxSurge, which define how many Pods can be unavailable or added during the update.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+For this problem we have Deployment
+
+Deployment:
+===========
+A Deployment provides declarative updates for Pods and ReplicaSets.
+
+You describe a desired state in a Deployment, and the Deployment Controller changes the actual state to the desired state at a controlled rate. You can define Deployments to create new ReplicaSets, or to remove existing Deployments and adopt all their resources with new Deployments.
+
+Pod Name= [deployment-name]-[replicaset-name]-[random-name]
+Ex= 
+
+Pod is a subset of ReplicaSet
+ReplicaSet is subset of Deployment
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/sets/02-deployment.yaml
+kubectl get deployment
+kubectl get rs
+kubectl get pods
+
+Whenever we create a Deployment, it will create one ReplicaSet and it manage the pods through ReplicaSet.
+
+Whenever a new image version of application (i.e., image) is released, in deployment just we need to pull the latest image and run apply coomand. Deployment will take care of spinning up new pods with latest application image with zero downtime. In background rolling updates will happen.
+
+Rolling Update:
+10 pods are running
+11th pod with new version --> running
+it will remove 10th old pod
+12th pod with new version --> running
+it will remove 9th old pod
+.
+.
+20th pod with new version --> running
+it will remove 1st old pod
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/sets/02-deployment-strategy.yaml
+
+kubectl get deployment
+kubectl get rs
+kubectl get pods
+
+To see the rollout status, run:
+kubectl rollout status deployment/nginx-deployment
+
+The output is similar to this:
+Waiting for rollout to finish: 2 out of 3 new replicas have been updated..
+
+ you can edit the Deployment and change
+ kubectl edit deployment/nginx-deployment
+
+ kubectl describe deployments
+
+To check the revisions of this Deployment:
+
+kubectl rollout history deployment/nginx-deployment
+deployment.apps/nginx-deployment 
+REVISION  CHANGE-CAUSE
+2         <none>
+3         <none>
+
+To see the details of each revision, run:
+
+kubectl rollout history deployment/nginx-deployment --revision=2
+deployment.apps/nginx-deployment with revision #2
+Pod Template:
+  Labels:       app=nginx
+        pod-template-hash=547d878d89
+  Containers:
+   nginx:
+    Image:      nginx:latest
+    Port:       80/TCP
+    Host Port:  0/TCP
+    Environment:        <none>
+    Mounts:     <none>
+  Volumes:      <none>
+
+Rolling Back to a Previous Revision:
+
+Follow the steps given below to rollback the Deployment from the current version to the previous version, which is version 2.
+
+1. Now you've decided to undo the current rollout and rollback to the previous revision:
+kubectl rollout undo deployment/nginx-deployment
+deployment.apps/nginx-deployment rolled back
+
+you can rollback to a specific revision by specifying it with --to-revision:
+kubectl rollout undo deployment/nginx-deployment --to-revision=2
+deployment.apps/nginx-deployment rolled back
+
+2. Check if the rollback was successful and the Deployment is running as expected, run:
+kubectl get deployment nginx-deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   10/10   10           10          51m
+
+3. Get the description of the Deployment:
+kubectl describe deployment nginx-deployment
+
+kubectl scale deployment/nginx-deployment --replicas=11
+deployment.apps/nginx-deployment scaled
+
+Assuming horizontal Pod autoscaling is enabled in your cluster, you can set up an autoscaler for your Deployment and choose the minimum and maximum number of Pods you want to run based on the CPU utilization of your existing Pods.
+kubectl autoscale deployment/nginx-deployment --min=10 --max=15 --cpu-percent=80
+
+CICD script:
+------------
+Create a new Deployment
+Check Deployment status
+if fine --> end pipeline  --> success
+if fails --> kubectl rollout undo deployment/nginx-deployment --> error -->end
+
+Drawback in Deployment:
+Everytime we need to delete the pod and recreate if the new version comes up.
+----------------------------------------------------------------------------------------
+Volumes:
+
+On-disk files in a container are ephemeral, which presents some problems for non-trivial applications when running in containers. One problem occurs when a container crashes or is stopped. Container state is not saved so all of the files that were created or modified during the lifetime of the container are lost. During a crash, kubelet restarts the container with a clean state. Another problem occurs when multiple containers are running in a Pod and need to share files. It can be challenging to setup and access a shared filesystem across all of the containers. The Kubernetes volume abstraction solves both of these problems. 
+
+Types of volumes:
+Kubernetes supports several types of volumes.
+awsEBS
+azureDisk
+gcePersistentDisk
+
+Storage inside K8s cluster:
+---------------------------
+1. emptyDir:
+   An emptyDir volume is first created when a Pod is assigned to a node, and exists as long as that Pod is running on that node. As the name says, the emptyDir volume is initially empty. All containers in the Pod can read and write the same files in the emptyDir volume, though that volume can be mounted at the same or different paths in each container. When a Pod is removed from a node for any reason, the data in the emptyDir is deleted permanently.
+
+   https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/storage/01-empty-dir.yaml
+   kubectl apply -f 01-empty-dir.yaml
+   kubectl get pods
+   kubectl exec simple-webapp -it -c sidecar-container -- sh
+   ls -l
+   cd /var/log/nginx
+   ls -l
+
+2. hostPath: 
+   hostPath is a type of K8s volume which can be used to access the underlying node filesystem through the container, but it is very dangerous to enable for the users. We can use it for the DaemonSet purpose.
+
+   hostPath volume mounts a file or directory from the host node's filesystem into your Pod.
+
+    Daemon Set:
+    DaemonSet is a type of workload controller that ensures a specific pod is running on every node in the cluster. 
+
+configMap:
+A ConfigMap provides a way to inject configuration data into pods. The data stored in a ConfigMap can be referenced in a volume of type configMap and then consumed by containerized applications running in a pod.
+
+Mounting configMap as volume:
+1. Create configMap for files like nginx.conf
+2. Mount them as volumes
+3. Use it for containers
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/storage/02-config-map.yaml
+kubectl apply -f 02-config-map.yaml
+kubectl get pods
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/storage/03-side-car.yaml
+kubectl apply -f 03-side-car.yaml
+kubectl get pods
+kubectl logs nginx-filebeat -c filebeat
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/storage/05-ebs-static.yaml
+Before running above script, we need to install drivers related to EBS.
+https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/install.md
+kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.20"
+kubectl get pods -n kube-system
+Attach the Policy if Ec2 full access to the node machines(IAM Role)
+instances need to be in the same region and availability zone as the EBS volume
+kubectl get pods
+kubectl get pv,pvc
+
+Storage outside K8s cluster:
+----------------------------
+emptyDir and hostPath are running inside the node server. We are using them for specific purposes.
+But, while running real application using MySQL, it's not safe to keep data inside emptyDir and hostPath.
+We need to create the storage outside of the cluster and we need to mount it.
+
+PV-Persistant Volumes
+PVC-Persistant Volume Claim
+
+Pod will claim the volume through PVC,
+PVC will ask the volume PV
+
+PV-->Equalent to Storage
+PVC--> Storage requester
+
+Why K8s  created these two (PV, PVC) objects?
+As a K8s adminstrator or user we don't know how the underlying storage will work in K8s. So K8s managing storage through these two objects.
+
+Lifecycle Policies:
+retain: even your pod deleted, K8s will make sure data will not be deleted
+delete: if pod deleted, your data is also deletes
+recycle: your disc is not deleted, but data is erased
+
+Access Modes:
+RWO (Read Write Once)--> If you have multiple pods, only one pod is allowed to write, remaining pods are for read.
+RWM (Read Write Many)--> all pods can read and write
+RO (Read Only) --> only for reading the data
+
+Provisioning:
+There are two ways PVs may be provisioned: statically or dynamically.
+1. Static Volume Provisioning
+2. Dynamic Volume Provisioning
+
+1. Static Volume Provisioning:
+--------------------------
+A cluster administrator creates a number of PVs. They carry the details of the real storage, which is available for use by cluster users. They exist in the Kubernetes API and are available for consumption.
+
+https://github.com/NaveenReddy420/k8s-resources-techworldwithsiva/blob/main/storage/05-ebs-static.yaml
+
+2. Dynamic Volume Provisioning:
+----------------------------
+Dynamic volume provisioning in Kubernetes allows storage volumes to be automatically created on-demand when a PersistentVolumeClaim (PVC) is created. This eliminates the need for manual pre-provisioning of storage volumes.
+
+To enable dynamic volume provisioning, you need to set up a storage class with a provisioner that supports dynamic provisioning, and then create a PVC that references that storage class.
+
+Here are the general steps to configure dynamic volume provisioning:
+1. Set up a StorageClass:
+Create a StorageClass definition that specifies the provisioner and any other desired parameters. For example, if you are using the provisioner "example.com/aws-ebs", you can define a StorageClass as follows:
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-storage
+provisioner: example.com/aws-ebs
+parameters:
+  type: gp2
+
+2. Create a PersistentVolumeClaim (PVC):
+Create a PVC that requests storage from the desired StorageClass. The PVC represents a user's request for storage and will trigger the dynamic provisioning of a volume that matches the requirements specified in the PVC. For example:
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  storageClassName: ebs-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+3. Create a Pod that uses the PVC:
+Create a Pod that references the PVC and mounts the volume in the container. For example:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: my-container
+      image: nginx
+      volumeMounts:
+        - name: my-volume
+          mountPath: /data
+  volumes:
+    - name: my-volume
+      persistentVolumeClaim:
+        claimName: my-pvc
+
+When the PVC is created, Kubernetes will check the StorageClass and provision a PersistentVolume dynamically with the specified size and other parameters. The volume will then be bound to the PVC and mounted in the Pod. If the PVC is deleted, the associated volume will also be deleted.
+
+Note: Dynamic volume provisioning requires a provisioner that supports it, and the provisioner must be properly installed and configured in your cluster. The specific steps to set up dynamic provisioning may vary depending on the storage provider and Kubernetes distribution you are using.
+
+Storage Class:
+-------------
+In Kubernetes, a StorageClass is a resource that defines the provisioning properties and parameters for dynamic volume provisioning. It acts as an abstraction layer between users or applications and the underlying storage infrastructure. StorageClasses provide a way to define different classes of storage with specific characteristics, such as performance, availability, and access modes.
+
+Dynamic Provisioning (EBS):
+We don't create PV, we don't create PVC
+Everything will be handled by the PVC
+
+We will install drivers for example EBS
+We will create storage class for EBS
+
+Before running script need to install drivers related to EBS (Just search EBS drivers for EKS in Google, Goto Github page and find command to install driver)
+EC2 instances(Node machines) has EC2 Full Access policy(IAM Role)
+
+kubectl apply -f 06-ebs-dynamic.yaml
+It will create a EBS vaolume and it is attached.
+kubectl delete -f 06-ebs-dynamic.yaml
+If we delete it, EBS volume will be is Available state.
+
+Dynamic Provisioning (EFS):
+Install EFS Drivers
+Create storage class for EFS (Just search EFS drivers for EKS in Google, Goto Github page and find command to install driver)
+
+Create EFS in AWS console
+EC2 instances(Node machines) has AmazonElasticFileSystems Full Access policy(IAM Role)
+
+kubectl apply -f 07-efs.yaml
+kubectl get pods
+kubectl get pv
+Go check EFS in AWS, we can see PV ID is created in Access Points tab
+
+kubectl get sc 
+
+==@@@@@=======================================================
+Selectors:
+----------
+3 nodes or 2 nodes
+apply--> EKS randomly selecting the nodes
+
+apply labels to the nodes
+then we will use the nodeSelector in pod definition
+
+kubectl get nodes
+kubectl label nodes NODE_NAME tier=web
+kubectl get nodes --show-labels
+
+Now i have one pod that needs to go to particular node
+
+01-node-selector.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    env: test
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  nodeSelector:
+    tier: web
+	
+kubectl apply -f 01-node-selector.yaml
+kubectl get pods -o wide
+
+Affinity and anti-affinity
+-------------------------
+nodeSelector is the simplest way to constrain Pods to nodes with specific labels. Affinity and anti-affinity expands the types of constraints you can define.
+
+Node affinity functions like the nodeSelector field but is more expressive and allows you to specify soft rules.
+Inter-pod affinity/anti-affinity allows you to constrain Pods against labels on other Pods.
+
+Node affinity is conceptually similar to nodeSelector, allowing you to constrain which nodes your Pod can be scheduled on based on node labels. There are two types of node affinity:
+
+1. requiredDuringSchedulingIgnoredDuringExecution: 
+Rules must be met during scheduling but are ignored once the Pod is running.
+
+02-node-affinity.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: tier
+            operator: NotIn
+            values:
+            - web
+  containers:
+  - name: nginx
+    image: nginx
+	
+kubectl apply -f 02-node-affinity.yaml
+kubectl get pods -o wide
+
+2. preferredDuringSchedulingIgnoredDuringExecution:
+Rules are not mandatory to met but preferred during scheduling and ignored once the Pod is running.
+
+Here you can have multiple labels, you can put weight.
+If multiple nodes matches, more weight will get prefer.
+
+03-node-affinity.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-affinity-anti-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: tier
+            operator: In
+            values:
+            - web
+      - weight: 50
+        preference:
+          matchExpressions:
+          - key: tier
+            operator: In
+            values:
+            - app
+  containers:
+  - name: nginx
+    image: nginx
+	
+kubectl delete -f 01-node-selector.yaml
+kubectl label nodes NODE_NAME tier=app
+kubectl apply -f 03-node-affinity.yaml
+kubectl get pods -o wide
+
+Pod Affinity:
+-------------
+Cart ---> Catalogue (Cart is dependent on the catalogue)
+If both pods are in the same node then latency will be less
+Catalogue --->Lables
+Cart ---> Go and sit in the node where catalogue is running.
+
+kubectl delete -f 03-node-affinity.yaml
+
+04-pod-affinity.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: catalogue
+  labels:
+    name: catalogue
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cart
+spec:
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: name
+            operator: In
+            values:
+            - catalogue
+        topologyKey: topology.kubernetes.io/zone
+  containers:
+  - name: nginx
+    image: nginx
+	
+kubectl apply -f 04-pod-affinity.yaml
+kubectl get pods -o wide
+
+Anti Affinity:
+--------------
+Catalogue is ruuning
+I want cart in node where catalogue is not running.
+
+kubectl delete -f 04-pod-affinity.yaml
+
+05-pod-anti-affinity.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: catalogue
+  labels:
+    name: catalogue
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cart
+spec:
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: name
+            operator: In
+            values:
+            - catalogue
+        topologyKey: topology.kubernetes.io/zone
+  containers:
+  - name: nginx
+    image: nginx
+
+kubectl apply -f 05-pod-anti-affinity.yaml
+kubectl get pods -o wide
+
+
+kubectl delete -f 05-pod-anti-affinity.yaml
+
+The purpose of the below script is to deploy multiple replicas of a Redis cache and a web server in a Kubernetes cluster, ensuring that each cache instance is co-located with a web server on the same node to minimize skew and latency. It achieves this by using pod anti-affinity rules based on the hostname topology key.
+
+06-affinity-anti-affinity.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-cache
+spec:
+  selector:
+    matchLabels:
+      app: store
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: store
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - store
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: redis-server
+        image: redis:3.2-alpine
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+spec:
+  selector:
+    matchLabels: # replica labels
+      app: web-store
+  replicas: 3
+  template:
+    metadata:
+      labels: #pod labels
+        app: web-store
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - web-store
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: web-app
+        image: nginx:1.16-alpine
+		
+kubectl apply -f 06-affinity-anti-affinity.yaml
+watch kubectl get pods -o wide
+kubectl delete -f 06-affinity-anti-affinity.yaml
+
+Taints and Tolerations:
+------------------------
+Node affinity is a way to attract Pods to specific nodes in a Kubernetes cluster, while taints allow nodes to repel Pods. Tolerations are properties applied to Pods that allow them to schedule on nodes with matching taints, but they don't guarantee scheduling as other factors are considered. Taints and tolerations work together to ensure that Pods are not scheduled on unsuitable nodes by marking nodes with taints and Pods with corresponding tolerations.
+
+Use case:
+Out of 3 nodes taint one node, by default scheduler will not schedule any pod in this
+But we want DB pods in this, for this we should use tolerations
+
+kubectl get nodes
+kubectl taint nodes NODE1_NAME tier=DB:NoSchedule  #By default K8s will not schedule any pods in this node.
